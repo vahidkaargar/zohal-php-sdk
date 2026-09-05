@@ -289,3 +289,11 @@ Every HTTP call is mocked (`GuzzleHttp\Handler\MockHandler`) — no network acce
 composer install
 php -l src/**/*.php   # syntax check
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up the project, the expected test coverage for a change, and the code style this repo follows. Bug reports and pull requests are welcome.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
