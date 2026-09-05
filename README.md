@@ -1,5 +1,9 @@
 # Zohal PHP SDK
 
+[![Tests](https://github.com/vahidkaargar/zohal-php-sdk/actions/workflows/tests.yml/badge.svg)](https://github.com/vahidkaargar/zohal-php-sdk/actions/workflows/tests.yml)
+[![Packagist Version](https://img.shields.io/packagist/v/vahidkaargar/zohal-php-sdk.svg)](https://packagist.org/packages/vahidkaargar/zohal-php-sdk)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 PHP client for the [Zohal](https://zohal.io) API — bank card/IBAN inquiries, cheque and identity verification, company registry lookups, utility bill inquiries, credit scoring, and biometric (Liveness) video authentication.
 
 ## Requirements
@@ -201,6 +205,15 @@ composer test   # runs vendor/bin/phpunit
 ```
 
 Every HTTP call is mocked (`GuzzleHttp\Handler\MockHandler`) — no network access, no real Zohal credentials needed. Coverage includes every public method on every service class (request path, payload/multipart fields, and the unwrapped return value), the client's handling of all three response envelope shapes the real API actually uses (data-wrapped, bare, and no-`data`-key), business vs. transport error handling, and the Laravel service provider's container bindings.
+
+## CI
+
+[.github/workflows/tests.yml](.github/workflows/tests.yml) runs on every push and pull request:
+
+- **Lint** — `composer validate --strict` + a PHP syntax check, gating everything else.
+- **Tests** — the full suite on PHP 8.1 through 8.4.
+- **Lowest dependency versions** — the suite again with `composer update --prefer-lowest`, to catch code that only works with newer-than-declared dependencies.
+- **Security audit** — `composer audit` against the resolved dependency tree.
 
 ## Development
 
