@@ -49,47 +49,109 @@ $client = new ZohalClient(token: 'YOUR_TOKEN', baseUri: 'https://sandbox.zohal.i
 | `CreditInquiryService` | Credit-report request flow: send OTP → verify OTP → fetch report |
 | `BiometricService` | Selfie-video upload + Liveness session for video authentication |
 
-### InquiryService
+Every method returns a plain `array` (the API response's unwrapped data) or throws a `ZohalException` — see [Error handling](#error-handling). All arguments are `string` unless noted otherwise. Array shapes below use `{...}` for an associative array and `[...]` for a list.
+
+### InquiryService — 24 methods
 
 ```php
 use Zohal\Sdk\Services\InquiryService;
 
 $inquiry = new InquiryService($client);
+$data = $inquiry->cardInquiry('6362XXXXXXX11');
+echo $data['name'];
+```
 
-$inquiry->cardInquiry('6362XXXXXXX11');                 // ['name' => ...]
-$inquiry->cardToIban('6362XXXXXXX11');                   // ['IBAN' => ..., 'bank_name' => ..., 'name' => ...]
-$inquiry->iban('IR96056061182xxxxxxxxxxxx1');            // ['name' => ..., 'bank_name' => ..., 'is_transferable' => bool]
-$inquiry->shahkar('09121234567', '0021234567');          // ['matched' => bool]
-$inquiry->nationalIdentityInquiry('0021234567', '1370/01/01'); // ['matched' => bool, 'first_name' => ..., ...]
-$inquiry->companyInquiry('14001234560');                 // full company registry record
-$inquiry->postalCodeInquiry('1234567890');                // ['address' => [...]]
-$inquiry->vehicleInquiryTotalViolations('09121234567', '0021234567', '11ب111', '11');
+All methods are plain JSON `POST` requests except `nationalCardOcr()`, which is `multipart/form-data`.
 
-// File upload (multipart) — the one exception to JSON in this service
+#### Card / account / IBAN
+
+| Method | Parameters | Returns |
+|---|---|---|
+| `cardInquiry` | `$cardNumber` | `{name}` |
+| `cardToIban` | `$cardNumber` | `{IBAN, bank_name, name}` |
+| `accountToIban` | `$bankAccount, $bankCode` | `{IBAN}` |
+| `cardToAccount` | `$cardNumber` | `{bank_account, bank_name, name}` |
+| `iban` | `$iban` | `{name, bank_name, is_transferable: bool}` |
+| `checkCardWithName` | `$cardNumber, $name` | `{name}` |
+| `checkIbanWithName` | `$iban, $name` | `{matched: bool}` |
+| `checkIbanWithNationalCode` | `$iban, $nationalCode, $birthDate` | `{matched: bool}` |
+| `checkCardWithNationalCode` | `$cardNumber, $nationalCode, $birthDate` | `{matched: bool}` |
+
+#### Cheque / Sayad
+
+| Method | Parameters | Returns |
+|---|---|---|
+| `checkSayadInquiry` | `$sayadId` | `{sayad_id, iban, name, serial_no, series_no, check_type, issue_date, branch_code, expiration_date: ?string, returned_cheques}` |
+| `checkSayadInquiryChain` | `$chequeType, $nationalCode, $sayadId` | `{chain: [{role_type: int, customers: [{customer_type, name, national_code}]}]}` |
+| `bouncedCheque` | `$nationalCode, $nationalityType: int` | `{count: int}` |
+
+#### Identity
+
+| Method | Parameters | Returns |
+|---|---|---|
+| `shahkar` | `$mobile, $nationalCode` | `{matched: bool}` |
+| `nationalIdentityInquiry` | `$nationalCode, $birthDate` | `{matched: bool, first_name: ?string, last_name: ?string, father_name: ?string, national_code: ?string, alive: ?bool, is_dead: ?bool}` |
+
+#### Company registry
+
+| Method | Parameters | Returns |
+|---|---|---|
+| `companyInquiry` | `$nationalId` | `{name, national_id, company_type, register_date, register_number, issuance_date, created_at, address, postal_code, phone_number: ?string, fax_number, email_address, activity_end_date}` |
+| `companyInquiryBoardMembers` | `$nationalId` | `{company_title, board_members: [{name, position, start_date, duration}]}` |
+| `companyInquiryBoardMembersHistory` | `$nationalId` | `{company_title, board_members: [{position, name, start_date, duration, end_date}]}` |
+
+#### Postal / vehicle / eNamad
+
+| Method | Parameters | Returns |
+|---|---|---|
+| `postalCodeInquiry` | `$postalCode` | `{address: {province, town, street, street2, number, floor, side_floor, district, building_name, description}}` |
+| `vehicleInquiryTotalViolations` | `$mobile, $nationalCode, $plateNumber, $regionCode` | `{plate, paper_id, page_count: int, payment_id, price_status, inquire_price, warning_price, ejr_inquire_no}` |
+| `vehicleInquiryViolationsDetails` | `$mobile, $nationalCode, $plateNumber, $regionCode` | `{warnings: [{warning_id, paper_id, serial_no, violation_type, violatoin_address, violation_occure_date, violation_occure_time, final_price, has_image, investigation_ability, payment_id, violation_delivery_type}]}` |
+| `enamadInquiry` | `$website` | `{id: int, name, nameper, domain, expired: bool, expiry_date, approve_date, city_name, state_name, logolevel: int, srv_text, message}` |
+
+#### Text / OCR / OTP
+
+| Method | Parameters | Returns |
+|---|---|---|
+| `persianToFinglish` | `$persianText` | `{finglish_text}` |
+| `nationalCardOcr` | `$frontImagePath, $backImagePath = null` | `{front: {...}, back: ?array}` — **multipart file upload**, the one exception to JSON in this service; `$backImagePath` is optional |
+| `voiceOtp` | `$mobile, $code` | `{}` — no `data` payload; success is simply not throwing |
+
+```php
+// multipart file upload example
 $inquiry->nationalCardOcr('/path/to/front.jpg', '/path/to/back.jpg'); // back is optional
 ```
 
-See [src/Services/InquiryService.php](src/Services/InquiryService.php) for the full list of 24 methods and their return shapes.
-
-### BillInquiryService
+### BillInquiryService — 7 methods
 
 ```php
 use Zohal\Sdk\Services\BillInquiryService;
 
 $bills = new BillInquiryService($client);
-
-$bills->mci('09121234567');        // ['final_term' => [...], 'mid_term' => [...]]
-$bills->irancell('09121234567');
-$bills->rightel('09121234567');
-$bills->fixedLine('02112345678');  // API's own field is named `mobile` even for landline numbers
-$bills->gas('1234567890');         // flat fields: address, amount, payment_date, ...
-$bills->water('1234567890');
-$bills->electricity('1234567890');
+$bills->mci('09121234567'); // ['final_term' => [...], 'mid_term' => [...]]
 ```
 
-### CreditInquiryService
+All dates in the responses are Jalali-calendar strings (e.g. `"1404/06/12"`), not ISO.
 
-A three-step OTP flow. `sendOtp()` and `verifyOtp()` use non-standard response shapes documented directly on the class (`sendOtp` has no envelope at all; `verifyOtp`'s success response is undocumented by the API itself).
+| Method | Parameters | Returns |
+|---|---|---|
+| `rightel` | `$mobile` | `{final_term: {amount: float, bill_id, payment_id}, mid_term: {amount: float, bill_id, payment_id}}` |
+| `mci` | `$mobile` | same shape as `rightel` |
+| `irancell` | `$mobile` | same shape as `rightel` |
+| `fixedLine` | `$lineNumber` | same shape as `rightel` — the API's own request field is still named `mobile` on the wire even for landline numbers |
+| `gas` | `$billId` | `{bill_id, full_name, address, consumption_type, current_reading_date, previous_reading_date, amount: float, payment_id, payment_date}` |
+| `water` | `$billId` | `{account_type, full_name, address, bill_id, current_date, previous_date, amount: float, payment_id, payment_date}` |
+| `electricity` | `$billId` | same shape as `water` |
+
+### CreditInquiryService — 3 methods
+
+A three-step OTP flow. `sendOtp()` and `verifyOtp()` use non-standard response shapes documented directly on the class (`sendOtp` has no envelope at all; `verifyOtp`'s success response is undocumented by the API itself). `result()` does use the normal envelope.
+
+| Method | Parameters | Returns | Notes |
+|---|---|---|---|
+| `sendOtp` | `$mobile, $nationalCode` | `{reference_id, status}` | Bare top-level JSON — no `response_body` wrapper at all |
+| `verifyOtp` | `$referenceId, $otp` | whatever the API returns, untouched | The spec documents no response schema for this endpoint |
+| `result` | `$referenceId` | `{completed_at, reference_id, status, service, result: array}` | Normal envelope; `result` is the full credit-bureau report, deliberately untyped given its size |
 
 ```php
 use Zohal\Sdk\Services\CreditInquiryService;
@@ -108,9 +170,15 @@ $report = $credit->result($otp['reference_id']);
 
 `$report['result']` is a large, variably-shaped credit-bureau payload (bounced cheques, contracts, credit score, tax records, ...) — deliberately typed as a plain array rather than a strict shape.
 
-### BiometricService
+### BiometricService — 3 methods
 
-Upload a selfie video, start a Liveness session against it, then poll for the verdict (or use your own `callback_url` webhook instead of polling).
+Upload a selfie video, start a Liveness session against it, then poll for the verdict (or use your own `callback_url` webhook instead of polling). None of these three use the usual `{response_body:{data,...}}` envelope — fields sit directly under `response_body`.
+
+| Method | Parameters | Returns |
+|---|---|---|
+| `uploadMedia` | `$videoFilePath, $type = 'selfie_video'` | `{id, type}` |
+| `startLivenessSession` | `$selfieVideoMediaId, $nationalCode, $nationalCardSerial, $birthDate, $callbackUrl = null` | `{session_id, status}` |
+| `sessionResult` | `$sessionId` | `{completed_at: ?string, reason, result, status, type}` |
 
 ```php
 use Zohal\Sdk\Services\BiometricService;
