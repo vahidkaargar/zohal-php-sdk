@@ -10,10 +10,10 @@ PHP client for the [Zohal](https://zohal.io) API — bank card/IBAN inquiries, c
 ## Installation
 
 ```bash
-composer install
+composer require vahidkaargar/zohal-php-sdk
 ```
 
-(Not yet published to Packagist — add this repo as a VCS/path repository in a consuming project's `composer.json` until it is.)
+(Once published on Packagist. Until then, or to work from this repo directly, run `composer install` here, or add it as a [VCS repository](https://getcomposer.org/doc/05-repositories.md#vcs) in a consuming project's `composer.json`.)
 
 ## Quick start
 

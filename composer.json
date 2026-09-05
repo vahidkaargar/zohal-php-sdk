@@ -1,8 +1,9 @@
 {
-    "name": "zohal/sdk",
+    "name": "vahidkaargar/zohal-php-sdk",
     "description": "PHP SDK for the Zohal inquiry, banking, and biometric API",
     "type": "library",
     "license": "MIT",
+    "homepage": "https://github.com/vahidkaargar/zohal-php-sdk",
     "require": {
         "php": "^8.1",
         "guzzlehttp/guzzle": "^7.8"
