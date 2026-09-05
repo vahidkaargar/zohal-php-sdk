@@ -6,10 +6,14 @@
     "homepage": "https://github.com/vahidkaargar/zohal-php-sdk",
     "require": {
         "php": "^8.1",
-        "guzzlehttp/guzzle": "^7.8"
+        "guzzlehttp/guzzle": "^7.8",
+        "illuminate/support": "^9.0|^10.0|^11.0|^12.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^10.5"
+        "phpunit/phpunit": "^10.5",
+        "illuminate/container": "^9.0|^10.0|^11.0|^12.0",
+        "illuminate/config": "^9.0|^10.0|^11.0|^12.0",
+        "vlucas/phpdotenv": "^5.5"
     },
     "autoload": {
         "psr-4": {
@@ -20,6 +24,16 @@
         "psr-4": {
             "Zohal\\Sdk\\Tests\\": "tests/"
         }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Zohal\\Sdk\\Laravel\\ZohalServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
     },
     "minimum-stability": "stable",
     "prefer-stable": true

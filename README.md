@@ -133,6 +133,44 @@ $result = $biometric->sessionResult($session['session_id']);
 
 `reason` is one of `ACCEPT`, `REJECT_FACE_NOT_MATCH_ID`, `REJECT_MORE_THAN_ONE_PERSON`, `REJECT_NO_PERSON_DETECTED`, `REJECT_PERSON_TOO_FAR_AWAY`, `REJECT_VIDEO_BAD_LIGHT`, `REJECT_VIDEO_BAD_QUALITY`, `REJECT_VIDEO_NOT_LIVE`, `UNKNOWN`, or `UNDEFINED`.
 
+## Laravel
+
+The package ships a service provider that's auto-discovered — nothing to register manually. It binds `ZohalClient` and all four service classes into the container as singletons.
+
+1. Set your token (and optionally a separate one for the biometric service — see below) in `.env`:
+
+    ```dotenv
+    ZOHAL_TOKEN=your-token
+    # ZOHAL_BASE_URI=https://service.zohal.io/api/v0
+    # ZOHAL_BIOMETRIC_TOKEN=your-biometric-token
+    ```
+
+2. Optionally publish the config file to tweak it directly:
+
+    ```bash
+    php artisan vendor:publish --tag=zohal-config
+    ```
+
+3. Inject any service class wherever you need it:
+
+    ```php
+    use Zohal\Sdk\Services\InquiryService;
+
+    class WalletController
+    {
+        public function __construct(private InquiryService $inquiry) {}
+
+        public function show(string $cardNumber)
+        {
+            return $this->inquiry->cardInquiry($cardNumber);
+        }
+    }
+    ```
+
+    Or resolve it out of the container directly: `app(InquiryService::class)`.
+
+`BiometricService`'s client resolves from a separate `zohal.biometric_client` container binding, which uses `ZOHAL_BIOMETRIC_TOKEN` when set and falls back to `ZOHAL_TOKEN` otherwise — Zohal's video-auth service may be issued its own token independent of the rest of the API.
+
 ## Error handling
 
 Every failure — network error, non-2xx HTTP status, or a 2xx response carrying a business `error_code` (e.g. `CARD_NOT_FOUND`) — is thrown as a typed exception instead of being returned silently:
@@ -155,11 +193,18 @@ try {
 
 Both extend `Zohal\Sdk\Exceptions\ZohalException`, which also exposes `getContext()` (the request path and raw decoded response body, where available) for logging.
 
+## Testing
+
+```bash
+composer install
+composer test   # runs vendor/bin/phpunit
+```
+
+Every HTTP call is mocked (`GuzzleHttp\Handler\MockHandler`) — no network access, no real Zohal credentials needed. Coverage includes every public method on every service class (request path, payload/multipart fields, and the unwrapped return value), the client's handling of all three response envelope shapes the real API actually uses (data-wrapped, bare, and no-`data`-key), business vs. transport error handling, and the Laravel service provider's container bindings.
+
 ## Development
 
 ```bash
 composer install
 php -l src/**/*.php   # syntax check
 ```
-
-There's no PHPUnit test suite committed yet — `phpunit/phpunit` is present as a dev dependency for when one is added.
