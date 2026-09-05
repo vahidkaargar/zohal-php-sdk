@@ -35,6 +35,11 @@
     "scripts": {
         "test": "phpunit"
     },
+    "config": {
+        "platform": {
+            "php": "8.1.99"
+        }
+    },
     "minimum-stability": "stable",
     "prefer-stable": true
 }
