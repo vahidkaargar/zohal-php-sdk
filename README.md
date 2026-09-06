@@ -207,7 +207,7 @@ $result = $biometric->sessionResult($session['session_id']);
 
 ## Laravel
 
-The package ships a service provider that's auto-discovered — nothing to register manually. It binds `ZohalClient` and all four service classes into the container as singletons.
+Supports Laravel 9 through 13 (`illuminate/support` `^9.0|^10.0|^11.0|^12.0|^13.0`). The package ships a service provider that's auto-discovered — nothing to register manually. It binds `ZohalClient` and all four service classes into the container as singletons.
 
 1. Set your token (and optionally a separate one for the biometric service — see below) in `.env`:
 
@@ -279,7 +279,7 @@ Every HTTP call is mocked (`GuzzleHttp\Handler\MockHandler`) — no network acce
 [.github/workflows/tests.yml](.github/workflows/tests.yml) runs on every push and pull request:
 
 - **Lint** — `composer validate --strict` + a PHP syntax check, gating everything else.
-- **Tests** — the full suite on PHP 8.1 through 8.4.
+- **Tests** — the full suite on PHP 8.1 through 8.4. Each PHP version resolves its own dependency set fresh (`composer config platform.php <version>` then `composer update`, not a shared lock file), so the 8.3/8.4 legs genuinely exercise Laravel 13 while 8.1/8.2 exercise the older Laravel versions they're actually capped at.
 - **Lowest dependency versions** — the suite again with `composer update --prefer-lowest`, to catch code that only works with newer-than-declared dependencies.
 - **Security audit** — `composer audit` against the resolved dependency tree.
 

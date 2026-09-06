@@ -58,11 +58,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: composer-${{ runner.os }}-php${{ matrix.php }}-${{ hashFiles('composer.lock') }}
+          key: composer-${{ runner.os }}-php${{ matrix.php }}-${{ hashFiles('composer.json') }}
           restore-keys: composer-${{ runner.os }}-php${{ matrix.php }}-
 
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
+      - name: Resolve dependencies for this PHP version
+        run: |
+          composer config platform.php ${{ matrix.php }}
+          composer update --prefer-dist --no-interaction --no-progress
 
       - name: Run test suite
         run: composer test
